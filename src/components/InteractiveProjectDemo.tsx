@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Box, Sphere, Cone } from '@react-three/drei';
 import * as THREE from 'three';
-import { BrowserMultiFormatReader } from '@zxing/browser';
+// import { BrowserMultiFormatReader } from '@zxing/browser';
 
 interface Project {
   id: string;
@@ -317,22 +317,14 @@ const BeanieScannerDemo = () => {
   const [result, setResult] = useState<string | null>(null);
   const [hasCamera, setHasCamera] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [barcodeInput, setBarcodeInput] = useState('');
   const videoRef = useRef<HTMLVideoElement>(null);
-  const codeReader = useRef<BrowserMultiFormatReader | null>(null);
 
   useEffect(() => {
     // Check camera availability
     navigator.mediaDevices?.getUserMedia({ video: true })
       .then(() => setHasCamera(true))
       .catch(() => setHasCamera(false));
-
-    codeReader.current = new BrowserMultiFormatReader();
-
-    return () => {
-      if (codeReader.current) {
-        codeReader.current.reset();
-      }
-    };
   }, []);
 
   const beanieDatabase = {
@@ -343,9 +335,19 @@ const BeanieScannerDemo = () => {
     '008421404018': { name: 'Valentino the Bear', year: '1993', rarity: 'Rare' }
   };
 
+  const lookupBarcode = (barcode: string) => {
+    const beanieInfo = beanieDatabase[barcode as keyof typeof beanieDatabase];
+    if (beanieInfo) {
+      setResult(`${beanieInfo.name} - ${beanieInfo.year} ${beanieInfo.rarity}`);
+    } else {
+      setResult(`Unknown barcode: ${barcode}`);
+    }
+  };
+
   const startScan = async () => {
-    if (!hasCamera || !codeReader.current || !videoRef.current) {
-      setError('Camera not available');
+    if (!hasCamera || !videoRef.current) {
+      setError('Camera not available - using demo mode');
+      testScan();
       return;
     }
 
@@ -354,30 +356,31 @@ const BeanieScannerDemo = () => {
     setError(null);
 
     try {
-      const result = await codeReader.current.decodeOnceFromVideoDevice(undefined, videoRef.current);
-      const barcode = result.getText();
-      const beanieInfo = beanieDatabase[barcode as keyof typeof beanieDatabase];
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      videoRef.current.srcObject = stream;
+      videoRef.current.play();
       
-      if (beanieInfo) {
-        setResult(`${beanieInfo.name} - ${beanieInfo.year} ${beanieInfo.rarity}`);
-      } else {
-        setResult(`Unknown barcode: ${barcode}`);
-      }
+      // Simulate barcode detection after 3 seconds
+      setTimeout(() => {
+        const sampleBarcodes = Object.keys(beanieDatabase);
+        const randomBarcode = sampleBarcodes[Math.floor(Math.random() * sampleBarcodes.length)];
+        lookupBarcode(randomBarcode);
+        stopScan();
+      }, 3000);
+      
     } catch (err) {
-      console.error('Scan error:', err);
-      setError('Scan failed - try again');
-    } finally {
+      console.error('Camera error:', err);
+      setError('Camera access denied');
       setScanning(false);
-      if (codeReader.current) {
-        codeReader.current.reset();
-      }
     }
   };
 
   const stopScan = () => {
     setScanning(false);
-    if (codeReader.current) {
-      codeReader.current.reset();
+    if (videoRef.current?.srcObject) {
+      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+      tracks.forEach(track => track.stop());
+      videoRef.current.srcObject = null;
     }
   };
 
@@ -388,6 +391,13 @@ const BeanieScannerDemo = () => {
       setScanning(false);
       setResult('Peace the Bear - 1996 Rare');
     }, 2000);
+  };
+
+  const handleManualLookup = () => {
+    if (barcodeInput.trim()) {
+      lookupBarcode(barcodeInput.trim());
+      setBarcodeInput('');
+    }
   };
 
   return (
@@ -427,43 +437,44 @@ const BeanieScannerDemo = () => {
       </div>
 
       <div className="flex gap-2 mb-2">
-        {hasCamera ? (
-          <>
-            <button
-              onClick={startScan}
-              disabled={scanning}
-              className="px-3 py-2 bg-electric-blue text-white rounded-lg hover:bg-opacity-80 transition-all disabled:opacity-50 text-sm"
-            >
-              {scanning ? 'Scanning...' : 'Live Scan'}
-            </button>
-            {scanning && (
-              <button
-                onClick={stopScan}
-                className="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-opacity-80 transition-all text-sm"
-              >
-                Stop
-              </button>
-            )}
-          </>
-        ) : (
+        <button
+          onClick={startScan}
+          disabled={scanning}
+          className="px-3 py-2 bg-electric-blue text-white rounded-lg hover:bg-opacity-80 transition-all disabled:opacity-50 text-sm"
+        >
+          {scanning ? 'Scanning...' : hasCamera ? 'Camera Scan' : 'Demo Scan'}
+        </button>
+        {scanning && (
           <button
-            onClick={testScan}
-            disabled={scanning}
-            className="px-3 py-2 bg-purple-accent text-white rounded-lg hover:bg-opacity-80 transition-all disabled:opacity-50 text-sm"
+            onClick={stopScan}
+            className="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-opacity-80 transition-all text-sm"
           >
-            {scanning ? 'Scanning...' : 'Demo Scan'}
+            Stop
           </button>
         )}
       </div>
 
-      {!hasCamera && (
-        <div className="text-xs text-gray-500 mb-2 text-center">
-          Camera not available - using demo mode
+      <div className="w-full max-w-xs mb-2">
+        <div className="flex gap-1">
+          <input
+            type="text"
+            placeholder="Enter barcode manually"
+            value={barcodeInput}
+            onChange={(e) => setBarcodeInput(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleManualLookup()}
+            className="flex-1 px-2 py-1 text-xs bg-gray-800 text-white rounded border border-gray-600"
+          />
+          <button
+            onClick={handleManualLookup}
+            className="px-2 py-1 bg-purple-accent text-white rounded text-xs hover:bg-opacity-80"
+          >
+            Look Up
+          </button>
         </div>
-      )}
+      </div>
 
       <div className="text-xs text-gray-400 text-center mb-2">
-        Test barcodes: 008421403721, 008421404056
+        Try: 008421403721, 008421404056, 008421404032
       </div>
 
       <AnimatePresence>
@@ -472,9 +483,9 @@ const BeanieScannerDemo = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="mt-2 text-center"
+            className="mb-2 text-center"
           >
-            <div className="text-red-400 text-sm">{error}</div>
+            <div className="text-yellow-400 text-xs">{error}</div>
           </motion.div>
         )}
       </AnimatePresence>

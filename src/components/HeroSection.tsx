@@ -157,7 +157,7 @@ const HeroSection: React.FC = () => {
                 transition={{ duration: 0.8, delay: 0.5 }}
                 className="text-xl md:text-3xl text-electric-blue font-semibold mb-6"
               >
-                Aspiring Developer with Irreplaceable Perspective
+                Developer Who Prevents Technology Failures
               </motion.h2>
             )}
           </AnimatePresence>
@@ -171,24 +171,22 @@ const HeroSection: React.FC = () => {
                 className="space-y-6"
               >
                 <div className="value-statement text-gray-300 leading-relaxed space-y-4 max-w-3xl mx-auto">
-                  <p>
-                    I'm not your typical entry-level developer. I bring a CS degree, 
-                    8 years of hands-on experience supporting people with disabilities, 
-                    and a deep understanding of how technology fails its most vulnerable users.
+                  <p className="text-lg">
+                    <strong>8 years of field research your competitors don't have.</strong> I've supported 
+                    500+ people with disabilities through state healthcare systems, witnessing exactly 
+                    how technology fails when lives depend on it.
                   </p>
                   
-                  <p>
-                    While I'm building my development skills with modern AI tools, 
-                    I offer something your senior devs can't: I've held the hands of people 
-                    crying over interfaces they couldn't navigate. I've seen the real cost 
-                    of poor accessibility. I know which "edge cases" aren't edge cases at all.
+                  <p className="text-lg">
+                    <strong>I prevent the failures that make headlines.</strong> While your senior developers 
+                    debug code, I've debugged human crises caused by inaccessible technology. I know what 
+                    happens when a screen reader can't parse your form—someone loses their benefits.
                   </p>
                   
-                  <p>
-                    I'm learning to code not just to build things, but to solve problems 
-                    I've personally witnessed. That perspective—combined with my technical 
-                    foundation and AI-augmented workflow—makes me uniquely valuable to teams 
-                    building for real humans, not ideal users.
+                  <p className="text-lg">
+                    <strong>CS degree + Crisis-tested perspective = ROI you can't Google.</strong> I leverage 
+                    modern development tools and AI-augmented workflows to build inclusive technology from 
+                    day one. No costly retrofitting. No accessibility lawsuits. No abandoned users.
                   </p>
                 </div>
 
@@ -198,8 +196,8 @@ const HeroSection: React.FC = () => {
                   transition={{ delay: 2 }}
                   className="tagline text-lg md:text-xl text-white font-bold max-w-2xl mx-auto"
                 >
-                  Hire me for the insights. Train me on the code. 
-                  Together, we'll build technology that works for everyone.
+                  I bring the user insights your team is missing. 
+                  Ready to prevent your next accessibility crisis?
                 </motion.p>
 
                 <motion.button

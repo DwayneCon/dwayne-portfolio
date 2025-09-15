@@ -3,6 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Box, Sphere, Cone } from '@react-three/drei';
 import * as THREE from 'three';
+import { ExternalLink } from 'lucide-react';
+import ProjectModal from './ProjectModal';
+import BeanieBabyApp from './apps/BeanieBabyApp';
+import DollhouseApp from './apps/DollhouseApp';
 // import { BrowserMultiFormatReader } from '@zxing/browser';
 
 interface Project {
@@ -724,6 +728,10 @@ const CatTrapDemo = () => {
 };
 
 const InteractiveProjectDemo: React.FC<InteractiveProjectDemoProps> = ({ project, isActive }) => {
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const openModal = () => setModalOpen(true);
+  const closeModal = () => setModalOpen(false);
   const renderDemo = () => {
     switch (project.id) {
       case 'aritrova':
@@ -836,6 +844,13 @@ const InteractiveProjectDemo: React.FC<InteractiveProjectDemoProps> = ({ project
               {project.type.toUpperCase()}
             </span>
             <div className="flex gap-2">
+              <button
+                onClick={openModal}
+                className="p-1 bg-black bg-opacity-50 rounded hover:bg-opacity-70 transition-all"
+                title="Open Full App"
+              >
+                <ExternalLink size={16} className="text-white" />
+              </button>
               {project.github && (
                 <a
                   href={project.github}
@@ -881,6 +896,43 @@ const InteractiveProjectDemo: React.FC<InteractiveProjectDemoProps> = ({ project
           ))}
         </div>
       </div>
+
+      {/* Modal */}
+      <ProjectModal
+        isOpen={modalOpen}
+        onClose={closeModal}
+        title={project.title}
+      >
+        {project.id === 'beanie-scanner' && <BeanieBabyApp />}
+        {project.id === 'aritrova' && <DollhouseApp />}
+        {project.id === 'grocery-ai' && (
+          <div className="h-full flex items-center justify-center text-white">
+            <div className="text-center">
+              <h3 className="text-2xl font-bold mb-4">AI Meal Planner</h3>
+              <p className="text-gray-400 mb-4">Full application coming soon...</p>
+              <p className="text-sm text-gray-500">Intelligent meal planning with budget optimization</p>
+            </div>
+          </div>
+        )}
+        {project.id === 'cat-trap' && (
+          <div className="h-full flex items-center justify-center text-white">
+            <div className="text-center">
+              <h3 className="text-2xl font-bold mb-4">Cat Trap Monitor</h3>
+              <p className="text-gray-400 mb-4">Full application coming soon...</p>
+              <p className="text-sm text-gray-500">Computer vision monitoring system with AI detection</p>
+            </div>
+          </div>
+        )}
+        {!['beanie-scanner', 'aritrova', 'grocery-ai', 'cat-trap'].includes(project.id) && (
+          <div className="h-full flex items-center justify-center text-white">
+            <div className="text-center">
+              <h3 className="text-2xl font-bold mb-4">{project.title}</h3>
+              <p className="text-gray-400 mb-4">Full application demo coming soon...</p>
+              <p className="text-sm text-gray-500">{project.description}</p>
+            </div>
+          </div>
+        )}
+      </ProjectModal>
     </motion.div>
   );
 };

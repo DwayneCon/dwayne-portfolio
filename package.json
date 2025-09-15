@@ -19,6 +19,7 @@
     "d3": "^7.9.0",
     "framer-motion": "^12.23.12",
     "leva": "^0.10.0",
+    "lucide-react": "^0.544.0",
     "postprocessing": "^6.37.8",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",

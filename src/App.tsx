@@ -17,6 +17,7 @@ const CommandPalette = lazy(() => import('./components/CommandPalette'));
 const Terminal = lazy(() => import('./components/Terminal'));
 const AchievementNotification = lazy(() => import('./components/AchievementNotification'));
 const AIAssistant = lazy(() => import('./components/AIAssistant'));
+const PortfolioGame = lazy(() => import('./components/PortfolioGame'));
 
 function App() {
   const { 
@@ -25,7 +26,9 @@ function App() {
     commandPaletteOpen, 
     terminalOpen,
     konamiActivated,
-    achievements 
+    achievements,
+    isDarkMode,
+    gameActive
   } = useStore();
 
   useKonamiCode();
@@ -44,7 +47,20 @@ function App() {
     ╚═════╝  ╚══╝╚══╝ ╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═══╝╚══════╝
     `, 'color: #00D4FF;');
 
-    setTimeout(() => setLoading(false), 3000);
+    // Shorter timeout for production to handle slower connections
+    const timer = setTimeout(() => setLoading(false), 1500);
+    
+    // Also set loading to false when all critical resources are loaded
+    const handleLoad = () => {
+      clearTimeout(timer);
+      setLoading(false);
+    };
+    
+    if (document.readyState === 'complete') {
+      handleLoad();
+    } else {
+      window.addEventListener('load', handleLoad);
+    }
 
     const handleKeyPress = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -67,10 +83,17 @@ function App() {
     window.addEventListener('keypress', handleTerminalType);
 
     return () => {
+      clearTimeout(timer);
+      window.removeEventListener('load', handleLoad);
       window.removeEventListener('keydown', handleKeyPress);
       window.removeEventListener('keypress', handleTerminalType);
     };
   }, [setLoading]);
+
+  // Apply theme to document
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
 
   return (
     <div className={`min-h-screen ${konamiActivated ? 'retro-mode' : ''}`}>
@@ -111,6 +134,14 @@ function App() {
         {terminalOpen && (
           <Suspense fallback={null}>
             <Terminal />
+          </Suspense>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {gameActive && (
+          <Suspense fallback={null}>
+            <PortfolioGame />
           </Suspense>
         )}
       </AnimatePresence>

@@ -7,6 +7,8 @@ import { ExternalLink } from 'lucide-react';
 import ProjectModal from './ProjectModal';
 import BeanieBabyApp from './apps/BeanieBabyApp';
 import DollhouseApp from './apps/DollhouseApp';
+import GroceryPlannerApp from './apps/GroceryPlannerApp';
+import CatTrapMonitorApp from './apps/CatTrapMonitorApp';
 // import { BrowserMultiFormatReader } from '@zxing/browser';
 
 interface Project {
@@ -170,15 +172,13 @@ const GroceryAIDemo = () => {
 
   if (currentStep === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center p-4">
+      <div className="flex flex-col items-center justify-center h-full text-center p-3">
         <div className="mb-4">
-          <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center text-2xl mb-2">
-            🧠
-          </div>
+          <div className="text-4xl mb-4">🥗</div>
           <h3 className="text-lg font-semibold text-white">AI Meal Planner</h3>
         </div>
         
-        <div className="space-y-3 w-full max-w-xs">
+        <div className="space-y-2 w-full max-w-xs">
           <div>
             <label className="text-xs text-gray-400 block mb-1">Dietary Preference</label>
             <select 
@@ -234,7 +234,7 @@ const GroceryAIDemo = () => {
         
         <button
           onClick={() => setCurrentStep(1)}
-          className="mt-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-opacity-80 transition-all text-sm"
+          className="mt-3 px-3 py-1.5 bg-green-500 text-white rounded-lg hover:bg-opacity-80 transition-all text-xs"
         >
           Generate Plan
         </button>
@@ -244,7 +244,7 @@ const GroceryAIDemo = () => {
 
   if (currentStep === 1) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center p-4">
+      <div className="flex flex-col items-center justify-center h-full text-center p-3">
         <div className="mb-4">
           <motion.div
             animate={{ rotate: 360 }}
@@ -275,7 +275,7 @@ const GroceryAIDemo = () => {
   }
 
   return (
-    <div className="flex flex-col items-center justify-start h-full p-4 overflow-y-auto">
+    <div className="flex flex-col items-center justify-start h-full p-3 overflow-y-auto">
       <div className="mb-3">
         <h3 className="text-lg font-semibold text-white text-center">Your Meal Plan</h3>
         <div className="text-xs text-gray-400 text-center">
@@ -405,7 +405,7 @@ const BeanieScannerDemo = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full p-4">
+    <div className="flex flex-col items-center justify-center h-full p-3">
       <div className="relative w-40 h-32 mb-4">
         {scanning && hasCamera ? (
           <video
@@ -729,6 +729,7 @@ const CatTrapDemo = () => {
 
 const InteractiveProjectDemo: React.FC<InteractiveProjectDemoProps> = ({ project, isActive }) => {
   const [modalOpen, setModalOpen] = useState(false);
+  const [featuresExpanded, setFeaturesExpanded] = useState(false);
 
   const openModal = () => setModalOpen(true);
   const closeModal = () => setModalOpen(false);
@@ -763,7 +764,7 @@ const InteractiveProjectDemo: React.FC<InteractiveProjectDemoProps> = ({ project
         );
       case 'bookexchange':
         return (
-          <div className="flex flex-col items-center justify-center h-full p-4 bg-gradient-to-br from-blue-900 to-purple-900 rounded-lg">
+          <div className="flex flex-col items-center justify-center h-full p-3 bg-gradient-to-br from-blue-900 to-purple-900 rounded-lg">
             <div className="text-4xl mb-4">📚</div>
             <h3 className="text-lg font-semibold text-white mb-2">iOS Textbook Exchange</h3>
             <div className="space-y-2 text-sm text-center">
@@ -787,7 +788,7 @@ const InteractiveProjectDemo: React.FC<InteractiveProjectDemoProps> = ({ project
         );
       case 'traceforge':
         return (
-          <div className="flex flex-col items-center justify-center h-full p-4">
+          <div className="flex flex-col items-center justify-center h-full p-3">
             <div className="grid grid-cols-2 gap-2 w-full max-w-xs mb-4">
               <div className="bg-gray-800 p-2 rounded text-center">
                 <div className="text-green-400 font-bold">98%</div>
@@ -829,14 +830,16 @@ const InteractiveProjectDemo: React.FC<InteractiveProjectDemoProps> = ({ project
   return (
     <motion.div
       layout
-      className={`relative overflow-hidden rounded-lg transition-all duration-300 ${
-        isActive ? 'scale-105 shadow-2xl' : 'hover:scale-102'
+      data-project-id={project.id}
+      className={`relative overflow-hidden rounded-lg transition-all duration-300 group ${
+        isActive ? 'scale-105 shadow-2xl' : 'hover:scale-102 hover:shadow-xl'
       }`}
       style={{ backgroundColor: project.color + '20' }}
     >
-      <div className="h-64 relative">
+      <div className="h-80 relative">
         {renderDemo()}
         
+
         {/* Overlay info */}
         <div className="absolute top-4 left-4 right-4">
           <div className="flex items-center justify-between">
@@ -844,18 +847,12 @@ const InteractiveProjectDemo: React.FC<InteractiveProjectDemoProps> = ({ project
               {project.type.toUpperCase()}
             </span>
             <div className="flex gap-2">
-              <button
-                onClick={openModal}
-                className="p-1 bg-black bg-opacity-50 rounded hover:bg-opacity-70 transition-all"
-                title="Open Full App"
-              >
-                <ExternalLink size={16} className="text-white" />
-              </button>
               {project.github && (
                 <a
                   href={project.github}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
                   className="p-1 bg-black bg-opacity-50 rounded hover:bg-opacity-70 transition-all"
                 >
                   <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -868,33 +865,53 @@ const InteractiveProjectDemo: React.FC<InteractiveProjectDemoProps> = ({ project
         </div>
       </div>
 
-      <div className="p-6">
-        <h3 className="text-xl font-bold mb-2 text-white">{project.title}</h3>
-        <p className="text-gray-300 text-sm mb-4 leading-relaxed">{project.description}</p>
+      <div className="p-4">
+        <div className="mb-3">
+          <h3 className="text-lg font-bold mb-1 text-white">{project.title}</h3>
+          <p className="text-gray-300 text-xs leading-relaxed line-clamp-2">{project.description}</p>
+        </div>
         
-        <div className="mb-4">
-          <h4 className="text-xs font-semibold text-gray-400 mb-2">Key Features:</h4>
-          <ul className="text-xs text-gray-400 space-y-1">
-            {project.features.slice(0, 3).map((feature, index) => (
-              <li key={index} className="flex items-start">
-                <span className="text-electric-blue mr-2 text-xs mt-0.5">▶</span>
-                {feature}
-              </li>
+        <div className="mb-3">
+          <div className="flex flex-wrap gap-1 mb-2">
+            {project.techStack.slice(0, 5).map((tech, index) => (
+              <span
+                key={index}
+                className="px-2 py-1 text-xs rounded-full bg-opacity-20 text-white"
+                style={{ backgroundColor: project.color }}
+              >
+                {tech}
+              </span>
             ))}
-          </ul>
+          </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {project.techStack.slice(0, 4).map((tech, index) => (
-            <span
-              key={index}
-              className="px-2 py-1 text-xs rounded-full bg-opacity-20"
-              style={{ backgroundColor: project.color }}
-            >
-              {tech}
-            </span>
+        <div className="space-y-1">
+          {(featuresExpanded ? project.features : project.features.slice(0, 2)).map((feature, index) => (
+            <div key={index} className="flex items-start text-xs text-gray-400">
+              <span className="text-electric-blue mr-2 text-xs mt-0.5 shrink-0">▶</span>
+              <span className={featuresExpanded ? "" : "line-clamp-1"}>{feature}</span>
+            </div>
           ))}
+          {project.features.length > 2 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setFeaturesExpanded(!featuresExpanded);
+              }}
+              className="text-xs text-electric-blue hover:text-white transition-all mt-1"
+            >
+              {featuresExpanded ? '▲ Show less' : `▼ Show ${project.features.length - 2} more features`}
+            </button>
+          )}
         </div>
+        
+        <button 
+          onClick={openModal}
+          className="mt-3 pt-3 border-t border-gray-700 w-full flex items-center justify-center gap-2 text-xs text-electric-blue hover:text-white transition-all hover:bg-gray-800 hover:bg-opacity-50 py-2 rounded-b-lg"
+        >
+          <ExternalLink size={12} />
+          <span>Open Full Interactive Demo</span>
+        </button>
       </div>
 
       {/* Modal */}
@@ -905,24 +922,8 @@ const InteractiveProjectDemo: React.FC<InteractiveProjectDemoProps> = ({ project
       >
         {project.id === 'beanie-scanner' && <BeanieBabyApp />}
         {project.id === 'aritrova' && <DollhouseApp />}
-        {project.id === 'grocery-ai' && (
-          <div className="h-full flex items-center justify-center text-white">
-            <div className="text-center">
-              <h3 className="text-2xl font-bold mb-4">AI Meal Planner</h3>
-              <p className="text-gray-400 mb-4">Full application coming soon...</p>
-              <p className="text-sm text-gray-500">Intelligent meal planning with budget optimization</p>
-            </div>
-          </div>
-        )}
-        {project.id === 'cat-trap' && (
-          <div className="h-full flex items-center justify-center text-white">
-            <div className="text-center">
-              <h3 className="text-2xl font-bold mb-4">Cat Trap Monitor</h3>
-              <p className="text-gray-400 mb-4">Full application coming soon...</p>
-              <p className="text-sm text-gray-500">Computer vision monitoring system with AI detection</p>
-            </div>
-          </div>
-        )}
+        {project.id === 'grocery-ai' && <GroceryPlannerApp />}
+        {project.id === 'cat-trap' && <CatTrapMonitorApp />}
         {!['beanie-scanner', 'aritrova', 'grocery-ai', 'cat-trap'].includes(project.id) && (
           <div className="h-full flex items-center justify-center text-white">
             <div className="text-center">

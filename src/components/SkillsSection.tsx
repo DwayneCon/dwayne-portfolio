@@ -85,33 +85,81 @@ const SkillTree: React.FC = () => {
       .on('click', (event, d) => setSelectedSkill(d as Skill));
 
     nodeGroup.append('circle')
-      .attr('r', (d: any) => Math.min(d.proficiency * 0.4, 40))
+      .attr('r', (d: any) => Math.min(d.proficiency * 0.5, 50))
       .attr('fill', (d: any) => d.color)
-      .attr('fill-opacity', 0.8)
+      .attr('fill-opacity', 0.7)
       .attr('stroke', (d: any) => d.color)
-      .attr('stroke-width', 2)
-      .attr('stroke-opacity', 0.3)
+      .attr('stroke-width', 3)
+      .attr('stroke-opacity', 0.4)
+      .style('filter', 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))')
       .on('mouseenter', function(event, d) {
         d3.select(this)
           .transition()
-          .duration(150)
-          .attr('r', Math.min((d as any).proficiency * 0.5, 50));
+          .duration(200)
+          .attr('r', Math.min((d as any).proficiency * 0.6, 60))
+          .attr('fill-opacity', 0.9)
+          .attr('stroke-width', 4)
+          .style('filter', 'drop-shadow(0 8px 16px rgba(0,0,0,0.4))');
       })
       .on('mouseleave', function(event, d) {
         d3.select(this)
           .transition()
-          .duration(150)
-          .attr('r', Math.min((d as any).proficiency * 0.4, 40));
+          .duration(200)
+          .attr('r', Math.min((d as any).proficiency * 0.5, 50))
+          .attr('fill-opacity', 0.7)
+          .attr('stroke-width', 3)
+          .style('filter', 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))');
       });
 
-    nodeGroup.append('text')
-      .text((d: any) => d.name)
-      .attr('text-anchor', 'middle')
-      .attr('dy', '.35em')
-      .attr('fill', 'white')
-      .attr('font-size', '10px')
-      .attr('font-weight', 'bold')
-      .attr('pointer-events', 'none');
+    // Add text with proper wrapping and scaling
+    nodeGroup.each(function(d: any) {
+      const node = d3.select(this);
+      const radius = Math.min(d.proficiency * 0.5, 50);
+      const maxTextWidth = radius * 1.4; // Text should fit within circle
+      const fontSize = Math.max(10, Math.min(14, radius / 3.5)); // Larger font sizes
+      
+      // Split text into words for wrapping
+      const words = d.name.split(/\s+/);
+      const lineHeight = fontSize * 1.1;
+      
+      // Simple text wrapping
+      let lines: string[] = [];
+      let currentLine = '';
+      
+      words.forEach((word: string) => {
+        const testLine = currentLine ? `${currentLine} ${word}` : word;
+        // Approximate text width (rough calculation)
+        const textWidth = testLine.length * fontSize * 0.6;
+        
+        if (textWidth <= maxTextWidth || currentLine === '') {
+          currentLine = testLine;
+        } else {
+          if (currentLine) lines.push(currentLine);
+          currentLine = word;
+        }
+      });
+      if (currentLine) lines.push(currentLine);
+      
+      // Limit to 2 lines maximum
+      if (lines.length > 2) {
+        lines = [lines[0], lines[1].substring(0, 8) + '...'];
+      }
+      
+      // Position text vertically centered
+      const totalHeight = lines.length * lineHeight;
+      const startY = -(totalHeight - lineHeight) / 2;
+      
+      lines.forEach((line, i) => {
+        node.append('text')
+          .text(line)
+          .attr('text-anchor', 'middle')
+          .attr('dy', startY + i * lineHeight)
+          .attr('fill', 'white')
+          .attr('font-size', `${fontSize}px`)
+          .attr('font-weight', 'bold')
+          .attr('pointer-events', 'none');
+      });
+    });
 
     // No cleanup needed since we're not using simulation
   }, [selectedSkillCategory]);

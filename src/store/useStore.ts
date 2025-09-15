@@ -8,6 +8,7 @@ interface AppState {
   terminalOpen: boolean;
   soundEnabled: boolean;
   konamiActivated: boolean;
+  gameActive: boolean;
   selectedSkillCategory: string | null;
   visitedSections: string[];
   achievements: string[];
@@ -18,6 +19,7 @@ interface AppState {
   toggleTerminal: () => void;
   toggleSound: () => void;
   activateKonami: () => void;
+  toggleGame: () => void;
   setSelectedSkillCategory: (category: string | null) => void;
   addVisitedSection: (section: string) => void;
   unlockAchievement: (achievement: string) => void;
@@ -31,6 +33,7 @@ const useStore = create<AppState>((set) => ({
   terminalOpen: false,
   soundEnabled: false,
   konamiActivated: false,
+  gameActive: false,
   selectedSkillCategory: null,
   visitedSections: [],
   achievements: [],
@@ -41,6 +44,7 @@ const useStore = create<AppState>((set) => ({
   toggleTerminal: () => set((state) => ({ terminalOpen: !state.terminalOpen })),
   toggleSound: () => set((state) => ({ soundEnabled: !state.soundEnabled })),
   activateKonami: () => set({ konamiActivated: true }),
+  toggleGame: () => set((state) => ({ gameActive: !state.gameActive })),
   setSelectedSkillCategory: (category) => set({ selectedSkillCategory: category }),
   addVisitedSection: (section) => set((state) => ({
     visitedSections: [...new Set([...state.visitedSections, section])]

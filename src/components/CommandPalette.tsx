@@ -4,15 +4,61 @@ import useStore from '../store/useStore';
 
 const CommandPalette: React.FC = () => {
   const [search, setSearch] = useState('');
-  const { toggleCommandPalette, toggleSound, toggleTerminal } = useStore();
+  const { toggleCommandPalette, toggleSound, toggleTerminal, toggleDarkMode, toggleGame, isDarkMode, gameActive } = useStore();
+
+  // Generate and download resume
+  const downloadResume = () => {
+    const resumeContent = `
+DWAYNE CONCEPCION
+Aspiring Developer with Irreplaceable Perspective
+Email: dwaynecon@me.com | Location: Decatur, IL
+
+SUMMARY
+I'm not your typical entry-level developer. I bring a CS degree, 8 years of hands-on 
+experience supporting people with disabilities, and a deep understanding of how technology 
+fails its most vulnerable users. I'm learning to code not just to build things, but to 
+solve problems I've personally witnessed.
+
+TECHNICAL SKILLS
+• Frontend: JavaScript (ES6+), React, Three.js, HTML/CSS, Swift
+• Backend: Node.js, Python, MongoDB, SQL, Express
+• AI/3D: TensorFlow.js, Electron, SVG Generation, Firebase
+• DevOps: Git, Linux, Docker, Bash
+
+FEATURED PROJECTS
+• Aritrova - AI-powered 3D dollhouse design platform with automated laser cutting
+• Grocery Planner AI - Intelligent meal planning with constraint-based optimization
+• iOS Textbook Exchange - Student marketplace with Firebase backend
+
+EXPERIENCE
+Information Services Specialist II | State of Illinois - DoIT @ DCFS | Nov 2021 – Mar 2025
+Foster Care Caseworker | Kemmerer Village | Mar 2019 – Mar 2021
+Professional Caregiver | Private Contract | Sept 2015 – Jul 2017
+Direct Support Specialist | Transitional Services Inc. | 2012 – 2015
+
+Hire me for the insights. Train me on the code. 
+Together, we'll build technology that works for everyone.
+    `;
+    
+    const blob = new Blob([resumeContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Dwayne_Concepcion_Resume.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   const commands = [
-    { id: 'download', label: 'Download Resume', icon: '📄', action: () => console.log('Download') },
-    { id: 'source', label: 'View Source', icon: '👨‍💻', action: () => window.open('https://github.com') },
-    { id: 'theme', label: 'Toggle Theme', icon: '🎨', action: () => console.log('Theme') },
+    { id: 'download', label: 'Download Resume (TXT)', icon: '📄', action: downloadResume },
+    { id: 'resume-pdf', label: 'View Resume (PDF)', icon: '📋', action: () => window.open('/resume.pdf', '_blank') },
+    { id: 'source', label: 'View Source', icon: '👨‍💻', action: () => window.open('https://github.com/dwaynecon/dwayne-portfolio', '_blank') },
+    { id: 'theme', label: isDarkMode ? 'Light Mode' : 'Dark Mode', icon: isDarkMode ? '☀️' : '🌙', action: toggleDarkMode },
     { id: 'sound', label: 'Toggle Sound', icon: '🔊', action: toggleSound },
     { id: 'terminal', label: 'Open Terminal', icon: '💻', action: toggleTerminal },
-    { id: 'game', label: 'Start Game', icon: '🎮', action: () => console.log('Game') },
+    { id: 'game', label: gameActive ? 'Stop Game' : 'Start Game', icon: '🎮', action: toggleGame },
   ];
 
   const filteredCommands = commands.filter(cmd => 

@@ -72,6 +72,7 @@ const NetworkEffect = () => {
           count={particleCount}
           array={positions}
           itemSize={3}
+          args={[positions, 3]}
         />
       </bufferGeometry>
       <pointsMaterial
@@ -136,60 +137,102 @@ const HeroSection: React.FC = () => {
         </Canvas>
       </div>
 
-      <div className="relative z-10 flex h-full flex-col items-center justify-center px-4">
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1 }}
-          className="mb-6 text-5xl md:text-7xl font-bold text-white"
-        >
-          <TypewriterText text="Dwayne Concepcion" />
-        </motion.h1>
+      <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 max-w-4xl mx-auto">
+        <div className="hero-blurb text-center space-y-6">
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1 }}
+            className="text-5xl font-bold gradient-text mb-4"
+          >
+            <TypewriterText text="Dwayne Concepcion" />
+          </motion.h1>
 
-        <AnimatePresence>
-          {showTagline && (
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.8 }}
-              className="mb-8 text-xl md:text-2xl text-gray-300"
-            >
-              Full-Stack Developer • AI/3D Innovation Specialist
-            </motion.p>
-          )}
-        </AnimatePresence>
+          <AnimatePresence>
+            {showTagline && (
+              <motion.h2
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.8, delay: 0.5 }}
+                className="text-xl md:text-3xl text-electric-blue font-semibold mb-6"
+              >
+                Aspiring Developer with Irreplaceable Perspective
+              </motion.h2>
+            )}
+          </AnimatePresence>
 
-        <AnimatePresence>
-          {showCTA && (
-            <motion.button
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={scrollToProjects}
-              className="interactive group relative overflow-hidden rounded-full px-8 py-4 font-semibold text-white"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-electric-blue to-purple-accent opacity-80 transition-opacity group-hover:opacity-100" />
-              <span className="relative z-10 flex items-center gap-2">
-                Explore My Universe
-                <svg
-                  className="w-5 h-5 animate-bounce"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+          <AnimatePresence>
+            {showCTA && (
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 1, delay: 1 }}
+                className="space-y-6"
+              >
+                <div className="value-statement text-gray-300 leading-relaxed space-y-4 max-w-3xl mx-auto">
+                  <p>
+                    I'm not your typical entry-level developer. I bring a CS degree, 
+                    8 years of hands-on experience supporting people with disabilities, 
+                    and a deep understanding of how technology fails its most vulnerable users.
+                  </p>
+                  
+                  <p>
+                    While I'm building my development skills with modern AI tools, 
+                    I offer something your senior devs can't: I've held the hands of people 
+                    crying over interfaces they couldn't navigate. I've seen the real cost 
+                    of poor accessibility. I know which "edge cases" aren't edge cases at all.
+                  </p>
+                  
+                  <p>
+                    I'm learning to code not just to build things, but to solve problems 
+                    I've personally witnessed. That perspective—combined with my technical 
+                    foundation and AI-augmented workflow—makes me uniquely valuable to teams 
+                    building for real humans, not ideal users.
+                  </p>
+                </div>
+
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 2 }}
+                  className="tagline text-lg md:text-xl text-white font-bold max-w-2xl mx-auto"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 14l-7 7m0 0l-7-7m7 7V3"
-                  />
-                </svg>
-              </span>
-            </motion.button>
-          )}
-        </AnimatePresence>
+                  Hire me for the insights. Train me on the code. 
+                  Together, we'll build technology that works for everyone.
+                </motion.p>
+
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 2.5 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={scrollToProjects}
+                  className="interactive group relative overflow-hidden rounded-full px-8 py-4 font-semibold text-white mt-8"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-electric-blue to-purple-accent opacity-80 transition-opacity group-hover:opacity-100" />
+                  <span className="relative z-10 flex items-center gap-2">
+                    See My Work
+                    <svg
+                      className="w-5 h-5 animate-bounce"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                      />
+                    </svg>
+                  </span>
+                </motion.button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
         <motion.div
           initial={{ opacity: 0 }}

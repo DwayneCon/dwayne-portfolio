@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Box, Sphere, Cone } from '@react-three/drei';
 import * as THREE from 'three';
+import { BrowserMultiFormatReader } from '@zxing/browser';
 
 interface Project {
   id: string;
@@ -21,87 +22,291 @@ interface InteractiveProjectDemoProps {
   isActive: boolean;
 }
 
-// 3D Dollhouse Demo Component
+// Interactive 3D Dollhouse Component
+const EditableWall = ({ position, args, color, onSelect, isSelected }: any) => {
+  const meshRef = useRef<THREE.Mesh>(null);
+  
+  return (
+    <Box 
+      ref={meshRef}
+      position={position} 
+      args={args}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect();
+      }}
+    >
+      <meshStandardMaterial 
+        color={isSelected ? '#FF6B35' : color} 
+        transparent
+        opacity={isSelected ? 0.8 : 1}
+      />
+    </Box>
+  );
+};
+
 const DollhouseDemo = () => {
   const groupRef = useRef<THREE.Group>(null);
+  const [selectedWall, setSelectedWall] = useState<string | null>(null);
+  const [autoRotate, setAutoRotate] = useState(true);
   
   useFrame((state) => {
-    if (groupRef.current) {
-      groupRef.current.rotation.y = state.clock.getElapsedTime() * 0.2;
+    if (groupRef.current && autoRotate) {
+      groupRef.current.rotation.y = state.clock.getElapsedTime() * 0.1;
     }
   });
 
+  const handleWallSelect = (wallId: string) => {
+    setSelectedWall(wallId === selectedWall ? null : wallId);
+    setAutoRotate(false);
+  };
+
   return (
-    <group ref={groupRef}>
-      {/* House base */}
-      <Box position={[0, -0.5, 0]} args={[2, 0.1, 2]} >
-        <meshStandardMaterial color="#8B7355" />
-      </Box>
-      
-      {/* Walls */}
-      <Box position={[-1, 0.5, 0]} args={[0.1, 1, 2]} >
-        <meshStandardMaterial color="#E6D7C5" />
-      </Box>
-      <Box position={[1, 0.5, 0]} args={[0.1, 1, 2]} >
-        <meshStandardMaterial color="#E6D7C5" />
-      </Box>
-      <Box position={[0, 0.5, -1]} args={[2, 1, 0.1]} >
-        <meshStandardMaterial color="#E6D7C5" />
-      </Box>
-      <Box position={[0, 0.5, 1]} args={[2, 1, 0.1]} >
-        <meshStandardMaterial color="#E6D7C5" />
-      </Box>
-      
-      {/* Roof */}
-      <Cone position={[0, 1.5, 0]} args={[1.5, 0.8, 4]} rotation={[0, Math.PI/4, 0]}>
-        <meshStandardMaterial color="#8B4513" />
-      </Cone>
-      
-      {/* Windows */}
-      <Box position={[-0.99, 0.7, -0.5]} args={[0.12, 0.3, 0.3]} >
-        <meshStandardMaterial color="#87CEEB" />
-      </Box>
-      <Box position={[-0.99, 0.7, 0.5]} args={[0.12, 0.3, 0.3]} >
-        <meshStandardMaterial color="#87CEEB" />
-      </Box>
-    </group>
+    <>
+      <group ref={groupRef}>
+        {/* House base */}
+        <Box position={[0, -0.5, 0]} args={[2, 0.1, 2]} >
+          <meshStandardMaterial color="#8B7355" />
+        </Box>
+        
+        {/* Editable Walls */}
+        <EditableWall
+          position={[-1, 0.5, 0]}
+          args={[0.1, 1, 2]}
+          color="#E6D7C5"
+          onSelect={() => handleWallSelect('left')}
+          isSelected={selectedWall === 'left'}
+        />
+        <EditableWall
+          position={[1, 0.5, 0]}
+          args={[0.1, 1, 2]}
+          color="#E6D7C5"
+          onSelect={() => handleWallSelect('right')}
+          isSelected={selectedWall === 'right'}
+        />
+        <EditableWall
+          position={[0, 0.5, -1]}
+          args={[2, 1, 0.1]}
+          color="#E6D7C5"
+          onSelect={() => handleWallSelect('back')}
+          isSelected={selectedWall === 'back'}
+        />
+        <EditableWall
+          position={[0, 0.5, 1]}
+          args={[2, 1, 0.1]}
+          color="#E6D7C5"
+          onSelect={() => handleWallSelect('front')}
+          isSelected={selectedWall === 'front'}
+        />
+        
+        {/* Roof */}
+        <Box position={[0, 1.2, 0]} args={[2.2, 0.1, 2.2]} rotation={[0, 0, 0]}>
+          <meshStandardMaterial color="#8B4513" />
+        </Box>
+        
+        {/* Windows */}
+        <Box position={[-0.99, 0.7, -0.5]} args={[0.12, 0.3, 0.3]} >
+          <meshStandardMaterial color="#87CEEB" />
+        </Box>
+        <Box position={[-0.99, 0.7, 0.5]} args={[0.12, 0.3, 0.3]} >
+          <meshStandardMaterial color="#87CEEB" />
+        </Box>
+        
+        {/* Door */}
+        <Box position={[0.99, 0.4, 0]} args={[0.12, 0.8, 0.4]} >
+          <meshStandardMaterial color="#654321" />
+        </Box>
+      </group>
+    </>
   );
 };
 
 // AI Grocery Demo Component  
 const GroceryAIDemo = () => {
-  const [mealIndex, setMealIndex] = useState(0);
-  const meals = ['🥗 Caesar Salad', '🍝 Pasta Primavera', '🍗 Chicken Teriyaki', '🥘 Vegetable Curry'];
+  const [currentStep, setCurrentStep] = useState(0);
+  const [preferences, setPreferences] = useState({
+    dietary: 'none',
+    budget: 50,
+    people: 2,
+    days: 7
+  });
+  const [mealPlan, setMealPlan] = useState<any[]>([]);
+  const [generating, setGenerating] = useState(false);
+
+  const dietaryOptions = ['none', 'vegetarian', 'vegan', 'keto', 'gluten-free'];
   
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setMealIndex((prev) => (prev + 1) % meals.length);
+  const sampleMeals = {
+    none: ['🍗 Chicken Teriyaki', '🥩 Beef Stir Fry', '🐟 Salmon Pasta', '🍝 Spaghetti Bolognese'],
+    vegetarian: ['🥗 Caesar Salad', '🍝 Pasta Primavera', '🥘 Vegetable Curry', '🌯 Veggie Wrap'],
+    vegan: ['🥘 Lentil Curry', '🥗 Quinoa Salad', '🌮 Black Bean Tacos', '🍜 Vegetable Ramen'],
+    keto: ['🥑 Avocado Chicken', '🥩 Steak & Broccoli', '🐟 Salmon Salad', '🥓 Bacon & Eggs'],
+    'gluten-free': ['🐟 Grilled Fish', '🥗 Garden Salad', '🍗 Herb Chicken', '🥘 Rice Bowl']
+  };
+
+  const generateMealPlan = () => {
+    setGenerating(true);
+    setTimeout(() => {
+      const meals = sampleMeals[preferences.dietary as keyof typeof sampleMeals];
+      const plan = Array.from({ length: preferences.days }, (_, i) => ({
+        day: i + 1,
+        meal: meals[i % meals.length],
+        cost: (Math.random() * 8 + 5).toFixed(2)
+      }));
+      setMealPlan(plan);
+      setGenerating(false);
+      setCurrentStep(2);
     }, 2000);
-    return () => clearInterval(interval);
-  }, []);
+  };
+
+  const resetDemo = () => {
+    setCurrentStep(0);
+    setMealPlan([]);
+    setPreferences({ dietary: 'none', budget: 50, people: 2, days: 7 });
+  };
+
+  if (currentStep === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center p-4">
+        <div className="mb-4">
+          <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center text-2xl mb-2">
+            🧠
+          </div>
+          <h3 className="text-lg font-semibold text-white">AI Meal Planner</h3>
+        </div>
+        
+        <div className="space-y-3 w-full max-w-xs">
+          <div>
+            <label className="text-xs text-gray-400 block mb-1">Dietary Preference</label>
+            <select 
+              value={preferences.dietary}
+              onChange={(e) => setPreferences(prev => ({ ...prev, dietary: e.target.value }))}
+              className="w-full px-2 py-1 text-xs bg-gray-800 text-white rounded border border-gray-600"
+            >
+              {dietaryOptions.map(option => (
+                <option key={option} value={option}>
+                  {option === 'none' ? 'No restrictions' : option}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          <div>
+            <label className="text-xs text-gray-400 block mb-1">Budget: ${preferences.budget}</label>
+            <input
+              type="range"
+              min="20"
+              max="100"
+              value={preferences.budget}
+              onChange={(e) => setPreferences(prev => ({ ...prev, budget: parseInt(e.target.value) }))}
+              className="w-full"
+            />
+          </div>
+          
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <label className="text-xs text-gray-400 block mb-1">People</label>
+              <input
+                type="number"
+                min="1"
+                max="8"
+                value={preferences.people}
+                onChange={(e) => setPreferences(prev => ({ ...prev, people: parseInt(e.target.value) }))}
+                className="w-full px-2 py-1 text-xs bg-gray-800 text-white rounded border border-gray-600"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="text-xs text-gray-400 block mb-1">Days</label>
+              <input
+                type="number"
+                min="1"
+                max="14"
+                value={preferences.days}
+                onChange={(e) => setPreferences(prev => ({ ...prev, days: parseInt(e.target.value) }))}
+                className="w-full px-2 py-1 text-xs bg-gray-800 text-white rounded border border-gray-600"
+              />
+            </div>
+          </div>
+        </div>
+        
+        <button
+          onClick={() => setCurrentStep(1)}
+          className="mt-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-opacity-80 transition-all text-sm"
+        >
+          Generate Plan
+        </button>
+      </div>
+    );
+  }
+
+  if (currentStep === 1) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center p-4">
+        <div className="mb-4">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            className="w-16 h-16 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center text-2xl mb-2"
+          >
+            🧠
+          </motion.div>
+          <h3 className="text-lg font-semibold text-white">AI is planning...</h3>
+        </div>
+        
+        <div className="text-sm text-gray-400 space-y-1">
+          <div>✓ Analyzing dietary preferences</div>
+          <div>✓ Checking budget constraints</div>
+          <div>✓ Optimizing nutrition balance</div>
+          <div>✓ Generating shopping list</div>
+        </div>
+        
+        <button
+          onClick={generateMealPlan}
+          disabled={generating}
+          className="mt-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-opacity-80 transition-all text-sm disabled:opacity-50"
+        >
+          {generating ? 'Generating...' : 'Continue'}
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center p-4">
-      <div className="mb-4">
-        <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center text-2xl mb-2">
-          🧠
+    <div className="flex flex-col items-center justify-start h-full p-4 overflow-y-auto">
+      <div className="mb-3">
+        <h3 className="text-lg font-semibold text-white text-center">Your Meal Plan</h3>
+        <div className="text-xs text-gray-400 text-center">
+          {preferences.people} people • ${preferences.budget} budget • {preferences.dietary !== 'none' ? preferences.dietary : 'no restrictions'}
         </div>
-        <h3 className="text-lg font-semibold text-white">AI Planning...</h3>
       </div>
       
-      <motion.div
-        key={mealIndex}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        className="text-2xl font-bold text-electric-blue"
+      <div className="space-y-2 w-full max-w-xs mb-3">
+        {mealPlan.map((meal, index) => (
+          <motion.div
+            key={index}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: index * 0.1 }}
+            className="flex justify-between items-center bg-gray-800 p-2 rounded text-sm"
+          >
+            <div>
+              <div className="text-white">Day {meal.day}</div>
+              <div className="text-green-400 text-xs">{meal.meal}</div>
+            </div>
+            <div className="text-electric-blue font-semibold">${meal.cost}</div>
+          </motion.div>
+        ))}
+      </div>
+      
+      <div className="text-center mb-3">
+        <div className="text-sm text-gray-400">Total: ${mealPlan.reduce((sum, meal) => sum + parseFloat(meal.cost), 0).toFixed(2)}</div>
+      </div>
+      
+      <button
+        onClick={resetDemo}
+        className="px-3 py-1 bg-electric-blue text-white rounded text-sm hover:bg-opacity-80 transition-all"
       >
-        {meals[mealIndex]}
-      </motion.div>
-      
-      <div className="mt-4 text-sm text-gray-400">
-        + Smart grocery list generation
-      </div>
+        New Plan
+      </button>
     </div>
   );
 };
@@ -110,8 +315,73 @@ const GroceryAIDemo = () => {
 const BeanieScannerDemo = () => {
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<string | null>(null);
+  const [hasCamera, setHasCamera] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const codeReader = useRef<BrowserMultiFormatReader | null>(null);
 
-  const startScan = () => {
+  useEffect(() => {
+    // Check camera availability
+    navigator.mediaDevices?.getUserMedia({ video: true })
+      .then(() => setHasCamera(true))
+      .catch(() => setHasCamera(false));
+
+    codeReader.current = new BrowserMultiFormatReader();
+
+    return () => {
+      if (codeReader.current) {
+        codeReader.current.reset();
+      }
+    };
+  }, []);
+
+  const beanieDatabase = {
+    '008421403721': { name: 'Peace the Bear', year: '1996', rarity: 'Rare' },
+    '008421404056': { name: 'Princess the Bear', year: '1997', rarity: 'Ultra Rare' },
+    '008421404032': { name: 'Mystic the Unicorn', year: '1994', rarity: 'Common' },
+    '008421404063': { name: 'Garcia the Bear', year: '1995', rarity: 'Rare' },
+    '008421404018': { name: 'Valentino the Bear', year: '1993', rarity: 'Rare' }
+  };
+
+  const startScan = async () => {
+    if (!hasCamera || !codeReader.current || !videoRef.current) {
+      setError('Camera not available');
+      return;
+    }
+
+    setScanning(true);
+    setResult(null);
+    setError(null);
+
+    try {
+      const result = await codeReader.current.decodeOnceFromVideoDevice(undefined, videoRef.current);
+      const barcode = result.getText();
+      const beanieInfo = beanieDatabase[barcode as keyof typeof beanieDatabase];
+      
+      if (beanieInfo) {
+        setResult(`${beanieInfo.name} - ${beanieInfo.year} ${beanieInfo.rarity}`);
+      } else {
+        setResult(`Unknown barcode: ${barcode}`);
+      }
+    } catch (err) {
+      console.error('Scan error:', err);
+      setError('Scan failed - try again');
+    } finally {
+      setScanning(false);
+      if (codeReader.current) {
+        codeReader.current.reset();
+      }
+    }
+  };
+
+  const stopScan = () => {
+    setScanning(false);
+    if (codeReader.current) {
+      codeReader.current.reset();
+    }
+  };
+
+  const testScan = () => {
     setScanning(true);
     setResult(null);
     setTimeout(() => {
@@ -122,20 +392,30 @@ const BeanieScannerDemo = () => {
 
   return (
     <div className="flex flex-col items-center justify-center h-full p-4">
-      <div className="relative w-32 h-32 mb-4">
-        <div className="w-full h-full bg-gradient-to-br from-purple-400 to-pink-500 rounded-lg flex items-center justify-center">
-          {scanning ? (
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              className="text-white text-2xl"
-            >
-              📷
-            </motion.div>
-          ) : (
-            <span className="text-white text-2xl">🧸</span>
-          )}
-        </div>
+      <div className="relative w-40 h-32 mb-4">
+        {scanning && hasCamera ? (
+          <video
+            ref={videoRef}
+            className="w-full h-full rounded-lg object-cover"
+            autoPlay
+            playsInline
+            muted
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-purple-400 to-pink-500 rounded-lg flex items-center justify-center">
+            {scanning ? (
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                className="text-white text-2xl"
+              >
+                📷
+              </motion.div>
+            ) : (
+              <span className="text-white text-2xl">🧸</span>
+            )}
+          </div>
+        )}
         
         {scanning && (
           <motion.div
@@ -146,13 +426,58 @@ const BeanieScannerDemo = () => {
         )}
       </div>
 
-      <button
-        onClick={startScan}
-        disabled={scanning}
-        className="px-4 py-2 bg-electric-blue text-white rounded-lg hover:bg-opacity-80 transition-all disabled:opacity-50"
-      >
-        {scanning ? 'Scanning...' : 'Scan Barcode'}
-      </button>
+      <div className="flex gap-2 mb-2">
+        {hasCamera ? (
+          <>
+            <button
+              onClick={startScan}
+              disabled={scanning}
+              className="px-3 py-2 bg-electric-blue text-white rounded-lg hover:bg-opacity-80 transition-all disabled:opacity-50 text-sm"
+            >
+              {scanning ? 'Scanning...' : 'Live Scan'}
+            </button>
+            {scanning && (
+              <button
+                onClick={stopScan}
+                className="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-opacity-80 transition-all text-sm"
+              >
+                Stop
+              </button>
+            )}
+          </>
+        ) : (
+          <button
+            onClick={testScan}
+            disabled={scanning}
+            className="px-3 py-2 bg-purple-accent text-white rounded-lg hover:bg-opacity-80 transition-all disabled:opacity-50 text-sm"
+          >
+            {scanning ? 'Scanning...' : 'Demo Scan'}
+          </button>
+        )}
+      </div>
+
+      {!hasCamera && (
+        <div className="text-xs text-gray-500 mb-2 text-center">
+          Camera not available - using demo mode
+        </div>
+      )}
+
+      <div className="text-xs text-gray-400 text-center mb-2">
+        Test barcodes: 008421403721, 008421404056
+      </div>
+
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="mt-2 text-center"
+          >
+            <div className="text-red-400 text-sm">{error}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {result && (
@@ -174,34 +499,111 @@ const BeanieScannerDemo = () => {
 const CatTrapDemo = () => {
   const [detecting, setDetecting] = useState(false);
   const [catDetected, setCatDetected] = useState(false);
+  const [motionLevel, setMotionLevel] = useState(0);
+  const [confidence, setConfidence] = useState(0);
+  const [detectionHistory, setDetectionHistory] = useState<string[]>([]);
+  const [hasCamera, setHasCamera] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const startDetection = () => {
+  useEffect(() => {
+    navigator.mediaDevices?.getUserMedia({ video: true })
+      .then(() => setHasCamera(true))
+      .catch(() => setHasCamera(false));
+  }, []);
+
+  const simulateMotionDetection = () => {
+    if (intervalRef.current) return;
+    
+    intervalRef.current = setInterval(() => {
+      const motion = Math.random() * 100;
+      setMotionLevel(motion);
+      
+      if (motion > 60) {
+        const conf = Math.random() * 100;
+        setConfidence(conf);
+        
+        if (conf > 75) {
+          setCatDetected(true);
+          setDetectionHistory(prev => [
+            `${new Date().toLocaleTimeString()}: Cat detected (${conf.toFixed(1)}%)`,
+            ...prev.slice(0, 2)
+          ]);
+          
+          setTimeout(() => {
+            setCatDetected(false);
+            setConfidence(0);
+          }, 2000);
+        }
+      }
+    }, 500);
+  };
+
+  const startDetection = async () => {
     setDetecting(true);
     setCatDetected(false);
-    setTimeout(() => {
-      setCatDetected(true);
-      setDetecting(false);
-    }, 3000);
+    setDetectionHistory([]);
+    
+    if (hasCamera && videoRef.current) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        videoRef.current.srcObject = stream;
+        videoRef.current.play();
+      } catch (err) {
+        console.error('Camera access denied:', err);
+      }
+    }
+    
+    simulateMotionDetection();
+  };
+
+  const stopDetection = () => {
+    setDetecting(false);
+    setCatDetected(false);
+    setMotionLevel(0);
+    setConfidence(0);
+    
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    
+    if (videoRef.current?.srcObject) {
+      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+      tracks.forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full p-4">
-      <div className="relative w-40 h-32 mb-4">
-        <div className="w-full h-full bg-gray-800 rounded-lg border-2 border-gray-600 flex items-center justify-center">
-          {detecting ? (
-            <motion.div
-              animate={{ scale: [1, 1.05, 1] }}
-              transition={{ duration: 0.5, repeat: Infinity }}
-              className="text-2xl"
-            >
-              📹
-            </motion.div>
-          ) : catDetected ? (
-            <div className="text-2xl">🐱</div>
-          ) : (
-            <div className="text-gray-500 text-xl">📷</div>
-          )}
-        </div>
+    <div className="flex flex-col items-center justify-start h-full p-3 overflow-y-auto">
+      <div className="relative w-40 h-28 mb-3">
+        {detecting && hasCamera ? (
+          <video
+            ref={videoRef}
+            className="w-full h-full rounded-lg object-cover border-2 border-green-500"
+            autoPlay
+            playsInline
+            muted
+          />
+        ) : (
+          <div className="w-full h-full bg-gray-800 rounded-lg border-2 border-gray-600 flex items-center justify-center">
+            {detecting ? (
+              <motion.div
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ duration: 0.5, repeat: Infinity }}
+                className="text-2xl"
+              >
+                📹
+              </motion.div>
+            ) : catDetected ? (
+              <div className="text-2xl">🐱</div>
+            ) : (
+              <div className="text-gray-500 text-xl">📷</div>
+            )}
+          </div>
+        )}
         
         {detecting && (
           <div className="absolute top-2 right-2">
@@ -212,28 +614,100 @@ const CatTrapDemo = () => {
             />
           </div>
         )}
+        
+        {catDetected && (
+          <div className="absolute inset-0 border-2 border-red-500 rounded-lg">
+            <div className="absolute -top-6 left-0 text-xs text-red-500 bg-black px-1 rounded">
+              CAT {confidence.toFixed(1)}%
+            </div>
+          </div>
+        )}
       </div>
 
-      <button
-        onClick={startDetection}
-        disabled={detecting}
-        className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-opacity-80 transition-all disabled:opacity-50"
-      >
-        {detecting ? 'Monitoring...' : 'Start Monitor'}
-      </button>
+      {detecting && (
+        <div className="w-full max-w-xs mb-3 space-y-2">
+          <div className="flex justify-between text-xs">
+            <span className="text-gray-400">Motion:</span>
+            <span className={motionLevel > 60 ? 'text-red-400' : 'text-green-400'}>
+              {motionLevel.toFixed(0)}%
+            </span>
+          </div>
+          <div className="w-full bg-gray-700 rounded-full h-1">
+            <motion.div
+              className={`h-1 rounded-full ${
+                motionLevel > 60 ? 'bg-red-500' : 'bg-green-500'
+              }`}
+              style={{ width: `${motionLevel}%` }}
+              transition={{ duration: 0.3 }}
+            />
+          </div>
+          
+          {confidence > 0 && (
+            <div className="flex justify-between text-xs">
+              <span className="text-gray-400">AI Confidence:</span>
+              <span className={confidence > 75 ? 'text-green-400' : 'text-yellow-400'}>
+                {confidence.toFixed(1)}%
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="flex gap-2 mb-3">
+        <button
+          onClick={startDetection}
+          disabled={detecting}
+          className="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-opacity-80 transition-all disabled:opacity-50 text-sm"
+        >
+          {detecting ? 'Monitoring...' : hasCamera ? 'Live Monitor' : 'Demo Monitor'}
+        </button>
+        
+        {detecting && (
+          <button
+            onClick={stopDetection}
+            className="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-opacity-80 transition-all text-sm"
+          >
+            Stop
+          </button>
+        )}
+      </div>
+
+      {!hasCamera && (
+        <div className="text-xs text-gray-500 mb-2 text-center">
+          Camera not available - using simulation
+        </div>
+      )}
 
       <AnimatePresence>
         {catDetected && (
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="mt-4 text-center"
+            className="mb-3 text-center"
           >
             <div className="text-green-400 font-semibold">🚨 Cat Detected!</div>
             <div className="text-sm text-gray-400">Alert sent • Screenshot saved</div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {detectionHistory.length > 0 && (
+        <div className="w-full max-w-xs">
+          <div className="text-xs text-gray-400 mb-1">Detection Log:</div>
+          <div className="space-y-1 max-h-20 overflow-y-auto">
+            {detectionHistory.map((log, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="text-xs text-green-400 bg-gray-800 p-1 rounded"
+              >
+                {log}
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -243,18 +717,87 @@ const InteractiveProjectDemo: React.FC<InteractiveProjectDemoProps> = ({ project
     switch (project.id) {
       case 'aritrova':
         return (
-          <Canvas camera={{ position: [3, 3, 3], fov: 60 }}>
-            <ambientLight intensity={0.6} />
-            <pointLight position={[10, 10, 10]} intensity={0.8} />
-            <DollhouseDemo />
-          </Canvas>
+          <div className="relative w-full h-full">
+            <Canvas camera={{ position: [3, 3, 3], fov: 60 }}>
+              <ambientLight intensity={0.6} />
+              <pointLight position={[10, 10, 10]} intensity={0.8} />
+              <DollhouseDemo />
+            </Canvas>
+            <div className="absolute bottom-2 left-2 text-xs text-white bg-black bg-opacity-50 p-2 rounded">
+              Click walls to select • Interactive 3D editor
+            </div>
+          </div>
         );
       case 'grocery-ai':
-        return <GroceryAIDemo />;
+        return (
+          <div className="relative w-full h-full">
+            <GroceryAIDemo />
+          </div>
+        );
       case 'beanie-scanner':
         return <BeanieScannerDemo />;
       case 'cat-trap':
-        return <CatTrapDemo />;
+        return (
+          <div className="relative w-full h-full">
+            <CatTrapDemo />
+          </div>
+        );
+      case 'bookexchange':
+        return (
+          <div className="flex flex-col items-center justify-center h-full p-4 bg-gradient-to-br from-blue-900 to-purple-900 rounded-lg">
+            <div className="text-4xl mb-4">📚</div>
+            <h3 className="text-lg font-semibold text-white mb-2">iOS Textbook Exchange</h3>
+            <div className="space-y-2 text-sm text-center">
+              <div className="flex items-center gap-2 bg-black bg-opacity-30 p-2 rounded">
+                <span className="text-green-400">✓</span>
+                <span className="text-white">Swift + Firebase Backend</span>
+              </div>
+              <div className="flex items-center gap-2 bg-black bg-opacity-30 p-2 rounded">
+                <span className="text-green-400">✓</span>
+                <span className="text-white">Real-time Chat System</span>
+              </div>
+              <div className="flex items-center gap-2 bg-black bg-opacity-30 p-2 rounded">
+                <span className="text-green-400">✓</span>
+                <span className="text-white">Location-based Matching</span>
+              </div>
+            </div>
+            <button className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm">
+              View on GitHub
+            </button>
+          </div>
+        );
+      case 'traceforge':
+        return (
+          <div className="flex flex-col items-center justify-center h-full p-4">
+            <div className="grid grid-cols-2 gap-2 w-full max-w-xs mb-4">
+              <div className="bg-gray-800 p-2 rounded text-center">
+                <div className="text-green-400 font-bold">98%</div>
+                <div className="text-xs text-gray-400">CPU</div>
+              </div>
+              <div className="bg-gray-800 p-2 rounded text-center">
+                <div className="text-blue-400 font-bold">2.1GB</div>
+                <div className="text-xs text-gray-400">RAM</div>
+              </div>
+              <div className="bg-gray-800 p-2 rounded text-center">
+                <div className="text-purple-400 font-bold">45°C</div>
+                <div className="text-xs text-gray-400">TEMP</div>
+              </div>
+              <div className="bg-gray-800 p-2 rounded text-center">
+                <div className="text-yellow-400 font-bold">12ms</div>
+                <div className="text-xs text-gray-400">PING</div>
+              </div>
+            </div>
+            <motion.div
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="text-2xl mb-2"
+            >
+              📈
+            </motion.div>
+            <h3 className="text-white font-semibold">System Monitor</h3>
+            <p className="text-xs text-gray-400 text-center">Real-time analytics & alerts</p>
+          </div>
+        );
       default:
         return (
           <div className="flex items-center justify-center h-full">

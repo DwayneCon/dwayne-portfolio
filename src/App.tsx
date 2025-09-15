@@ -10,7 +10,7 @@ import useKonamiCode from './hooks/useKonamiCode';
 // Lazy load heavy components
 const OrbitalNav = lazy(() => import('./components/OrbitalNav'));
 const SkillsSection = lazy(() => import('./components/SkillsSection'));
-const ProjectsSection = lazy(() => import('./components/ProjectsSection'));
+const ProjectsSection = lazy(() => import('./components/EnhancedProjectsSection'));
 const ExperienceSection = lazy(() => import('./components/ExperienceSection'));
 const ContactSection = lazy(() => import('./components/ContactSection'));
 const CommandPalette = lazy(() => import('./components/CommandPalette'));
